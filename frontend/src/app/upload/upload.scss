@@ -1,0 +1,508 @@
+// Corporate Color Palette
+$primary-color: #1a365d;
+$secondary-color: #2d3748;
+$accent-color: #3182ce;
+$success-color: #38a169;
+$warning-color: #ed8936;
+$error-color: #e53e3e;
+$light-bg: #f7fafc;
+$white: #ffffff;
+$gray-100: #f7fafc;
+$gray-200: #edf2f7;
+$gray-300: #e2e8f0;
+$gray-600: #718096;
+$gray-700: #4a5568;
+$gray-800: #2d3748;
+
+// Global Styles
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+// Corporate Header
+.app-header {
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  color: white;
+  padding: 2rem 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0 2rem;
+  }
+  
+  .app-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    
+    .title-icon {
+      font-size: 3rem;
+    }
+  }
+  
+  .app-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin: 0;
+    font-weight: 300;
+  }
+}
+
+// Main Container
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Card Base Styles
+.upload-card,
+.results-card {
+  background: $white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  .card-header {
+    background: linear-gradient(135deg, $gray-100 0%, $gray-200 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid $gray-300;
+    
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: $gray-800;
+      margin: 0 0 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      .card-icon {
+        font-size: 1.75rem;
+      }
+    }
+    
+    .card-description {
+      color: $gray-600;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+  }
+}
+
+// Upload Card Specific
+.upload-card {
+  .upload-section {
+    padding: 2rem;
+  }
+  
+  .upload-dropzone {
+    display: block;
+    border: 3px dashed $gray-300;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: $gray-100;
+    
+    &:hover {
+      border-color: $accent-color;
+      background: lighten($accent-color, 45%);
+      transform: translateY(-2px);
+    }
+    
+    &.has-file {
+      border-color: $success-color;
+      background: lighten($success-color, 45%);
+    }
+    
+    .dropzone-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .dropzone-icon {
+      font-size: 3rem;
+      opacity: 0.7;
+    }
+    
+    .dropzone-text {
+      text-align: center;
+      
+      .dropzone-main {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: $gray-700;
+        margin-bottom: 0.5rem;
+      }
+      
+      .dropzone-sub {
+        display: block;
+        font-size: 0.9rem;
+        color: $gray-600;
+      }
+    }
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .status-section {
+    text-align: center;
+    
+    .status-message {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      color: $gray-700;
+    }
+  }
+}
+
+// Button Styles
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  
+  .btn-icon {
+    font-size: 1.1rem;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  &.btn-primary {
+    background: linear-gradient(135deg, $accent-color 0%, darken($accent-color, 10%) 100%);
+    color: white;
+  }
+  
+  &.btn-secondary {
+    background: linear-gradient(135deg, $gray-600 0%, $gray-700 100%);
+    color: white;
+  }
+  
+  &.btn-export {
+    background: linear-gradient(135deg, $success-color 0%, darken($success-color, 10%) 100%);
+    color: white;
+  }
+}
+
+// Progress Bar
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: $gray-200;
+    border-radius: 10px;
+    overflow: hidden;
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, $accent-color 0%, darken($accent-color, 10%) 100%);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+  }
+  
+  .progress-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $gray-700;
+    min-width: 40px;
+  }
+}
+
+// Results Card Specific
+.results-card {
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    
+    .header-left {
+      flex: 1;
+    }
+    
+    .header-actions {
+      margin-left: 2rem;
+    }
+  }
+  
+  .formulas-table-container {
+    padding: 0;
+    background: $white;
+    overflow-x: auto;
+  }
+  
+  .formulas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    
+    thead {
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      color: white;
+      
+      th {
+        padding: 1rem 1.5rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        
+        &.col-acronym {
+          width: 120px;
+        }
+        
+        &.col-description {
+          width: 300px;
+        }
+        
+        &.col-formula {
+          width: auto;
+        }
+      }
+    }
+    
+    tbody {
+      tr {
+        border-bottom: 1px solid $gray-200;
+        transition: background-color 0.2s ease;
+        
+        &:hover {
+          background: lighten($accent-color, 48%);
+        }
+        
+        &.row-even {
+          background: $gray-100;
+          
+          &:hover {
+            background: lighten($accent-color, 45%);
+          }
+        }
+        
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+      
+      td {
+        padding: 1.25rem 1.5rem;
+        vertical-align: top;
+        
+        &.cell-acronym {
+          text-align: center;
+          
+          .acronym-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, $accent-color 0%, darken($accent-color, 10%) 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba($accent-color, 0.3);
+          }
+        }
+        
+        &.cell-description {
+          .description-content {
+            font-weight: 600;
+            color: $gray-800;
+            line-height: 1.5;
+          }
+        }
+        
+        &.cell-formula {
+          .formula-content {
+            font-family: 'Courier New', monospace;
+            background: $gray-100;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border-left: 4px solid $accent-color;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: $gray-800;
+            word-break: break-word;
+            overflow-wrap: break-word;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+  
+  .app-header {
+    padding: 1.5rem 0;
+    
+    .app-title {
+      font-size: 2rem;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .title-icon {
+        font-size: 2.5rem;
+      }
+    }
+    
+    .app-subtitle {
+      font-size: 1rem;
+    }
+  }
+  
+  .upload-card,
+  .results-card {
+    border-radius: 15px;
+    
+    .card-header {
+      padding: 1rem 1.5rem;
+      
+      .card-title {
+        font-size: 1.25rem;
+      }
+    }
+  }
+  
+  .upload-card .upload-section {
+    padding: 1.5rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+    
+    .btn {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+  
+  .results-card {
+    .card-header {
+      flex-direction: column;
+      gap: 1rem;
+      
+      .header-actions {
+        margin-left: 0;
+        align-self: stretch;
+        
+        .btn {
+          width: 100%;
+        }
+      }
+    }
+  }
+  
+  .formulas-table {
+    font-size: 0.85rem;
+    
+    thead th {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+    }
+    
+    tbody td {
+      padding: 1rem;
+      
+      &.cell-acronym .acronym-badge {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+      }
+      
+      &.cell-formula .formula-content {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+      }
+    }
+  }
+}
+
+// Additional animations and effects
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.results-card {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// Scrollbar styling for table container
+.formulas-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.formulas-table-container::-webkit-scrollbar-track {
+  background: $gray-200;
+}
+
+.formulas-table-container::-webkit-scrollbar-thumb {
+  background: $gray-600;
+  border-radius: 4px;
+}
+
+.formulas-table-container::-webkit-scrollbar-thumb:hover {
+  background: $gray-700;
+}

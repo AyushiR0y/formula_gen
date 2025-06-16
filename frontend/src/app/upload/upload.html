@@ -1,0 +1,125 @@
+<!-- Corporate Header -->
+<div class="app-header">
+  <div class="header-content">
+    <h1 class="app-title">
+      <span class="title-icon">📊</span>
+      FormulaExtract Pro
+    </h1>
+    <p class="app-subtitle">AI-Powered Mathematical Formula Extraction from Documents</p>
+  </div>
+</div>
+
+<!-- Main Content Container -->
+<div class="main-container">
+  <!-- Upload Card -->
+  <div class="upload-card">
+    <div class="card-header">
+      <h2 class="card-title">
+        <span class="card-icon">📄</span>
+        Document Upload
+      </h2>
+      <p class="card-description">
+        Upload your document to extract mathematical formulas automatically
+      </p>
+    </div>
+
+    <div class="upload-section">
+      <label class="upload-dropzone" [class.has-file]="selectedFile">
+        <input type="file" (change)="onFileSelected($event)" hidden>
+        <div class="dropzone-content">
+          <div class="dropzone-icon">
+            <span *ngIf="!selectedFile">📎</span>
+            <span *ngIf="selectedFile">📁</span>
+          </div>
+          <div class="dropzone-text">
+            <span *ngIf="!selectedFile" class="dropzone-main">
+              Drag & drop or click to select a file
+            </span>
+            <span *ngIf="selectedFile" class="dropzone-main">
+              {{ selectedFile.name }}
+            </span>
+            <span class="dropzone-sub">
+              Supported formats: {{ allowedExtensions.join(', ').toUpperCase() }}
+            </span>
+          </div>
+        </div>
+      </label>
+
+      <div class="action-buttons">
+        <button 
+          class="btn btn-primary" 
+          (click)="uploadFile()" 
+          [disabled]="!selectedFile">
+          <span class="btn-icon">🚀</span>
+          Process Document
+        </button>
+        <button 
+          class="btn btn-secondary" 
+          (click)="reset()" 
+          *ngIf="selectedFile">
+          <span class="btn-icon">🔄</span>
+          Reset
+        </button>
+      </div>
+
+      <div class="status-section" *ngIf="uploadStatus">
+        <p class="status-message">{{ uploadStatus }}</p>
+        
+        <!-- Enhanced Progress Bar -->
+        <div class="progress-container" *ngIf="uploadProgress > 0 && uploadProgress < 100">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+          </div>
+          <span class="progress-text">{{ uploadProgress }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Card -->
+  <div class="results-card" *ngIf="formulas.length > 0">
+    <div class="card-header">
+      <div class="header-left">
+        <h2 class="card-title">
+          <span class="card-icon">🧮</span>
+          Extracted Mathematical Formulas
+        </h2>
+        <p class="card-description">
+          {{ formulas.length }} formula(s) identified and processed
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-export" (click)="exportToExcel()">
+          <span class="btn-icon">📊</span>
+          Export to Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="formulas-table-container">
+      <table class="formulas-table">
+        <thead>
+          <tr>
+            <th class="col-acronym">Code</th>
+            <th class="col-description">Description</th>
+            <th class="col-formula">Mathematical Formula</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let formula of formulas; let i = index" 
+              [class.row-even]="i % 2 === 0">
+            <td class="cell-acronym">
+              <div class="acronym-badge">{{ formula.acronym }}</div>
+            </td>
+            <td class="cell-description">
+              <div class="description-content">{{ formula.description }}</div>
+            </td>
+            <td class="cell-formula">
+              <div class="formula-content">{{ formula.formula }}</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
