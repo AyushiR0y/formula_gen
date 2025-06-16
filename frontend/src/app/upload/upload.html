@@ -2,7 +2,7 @@
 <div class="app-header">
   <div class="header-content">
     <h1 class="app-title">
-      <span class="title-icon">📊</span>
+     
       FormulaExtract Pro
     </h1>
     <p class="app-subtitle">AI-Powered Mathematical Formula Extraction from Documents</p>
@@ -15,7 +15,7 @@
   <div class="upload-card">
     <div class="card-header">
       <h2 class="card-title">
-        <span class="card-icon">📄</span>
+        
         Document Upload
       </h2>
       <p class="card-description">
@@ -50,14 +50,14 @@
           class="btn btn-primary" 
           (click)="uploadFile()" 
           [disabled]="!selectedFile">
-          <span class="btn-icon">🚀</span>
+          
           Process Document
         </button>
         <button 
           class="btn btn-secondary" 
           (click)="reset()" 
           *ngIf="selectedFile">
-          <span class="btn-icon">🔄</span>
+          
           Reset
         </button>
       </div>
@@ -90,7 +90,7 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-export" (click)="exportToExcel()">
-          <span class="btn-icon">📊</span>
+          
           Export to Excel
         </button>
       </div>
