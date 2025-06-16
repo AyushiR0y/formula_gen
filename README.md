@@ -1,7 +1,11 @@
-🧠 Formula Extractor AI
+**🧠 Formula Extractor AI**
+
 This is a full-stack AI-powered tool that lets users upload product specification files (PDF, Word, text, or image). It uses Google Gemini and HuggingFace models to extract structured mathematical formulas related to insurance and finance, and also has a fallback local parser for offline use.
 
-🛠️ Tech Stack
+
+
+**🛠️ Tech Stack**
+
 Frontend: Angular
 
 Backend: Flask (Python)
@@ -16,7 +20,10 @@ CORS & File Uploads: Enabled
 
 Export: Formulas viewable and downloadable in Excel (from Angular)
 
-📁 Supported File Formats
+
+
+**📁 Supported File Formats**
+
 .pdf, .docx, .doc, .txt
 
 .png, .jpg, .jpeg, .tiff, .bmp (via OCR)
