@@ -4,11 +4,24 @@ import { HttpClient, HttpClientModule, HttpEventType } from '@angular/common/htt
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
-interface FormulaData {
-  acronym: string;
-  full_name: string;
-  description: string;
-  formula: string;
+interface ExtractedFormula {
+  term_description: string;
+  mathematical_relationship: string;
+  business_context: string;
+  formula_explanation: string;
+  confidence: number;
+  reasoning_steps: string[];
+  variables_explained: { [key: string]: string };
+  source_method: string;
+}
+
+interface BackendResponse {
+  message: string;
+  formulas: ExtractedFormula[];
+  status: 'success' | 'warning' | 'error';
+  file_type?: string;
+  extraction_method?: string;
+  total_formulas?: number;
 }
 
 @Component({
@@ -22,17 +35,21 @@ export default class UploadComponent {
   selectedFile: File | null = null;
   uploadStatus = '';
   uploadProgress = 0;
-  formulas: FormulaData[] = [];
+  formulas: ExtractedFormula[] = [];
   rawOutput = '';
   showRawOutput = false;
   supportedFormats: string[] = [];
   isLoading = false;
+  extractionMethod = '';
+  totalFormulas = 0;
+
+  // Expose Object to template
+  Object = Object;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {
     this.loadSupportedFormats();
   }
 
-  // Add this getter to fix the template error
   get allowedExtensions(): string[] {
     return this.supportedFormats;
   }
@@ -45,8 +62,7 @@ export default class UploadComponent {
       },
       error: (err) => {
         console.error('Failed to load supported formats:', err);
-        // Fallback to common formats
-        this.supportedFormats = ['pdf', 'docx', 'txt', 'png', 'jpg'];
+        this.supportedFormats = ['pdf', 'docx', 'txt'];
       }
     });
   }
@@ -62,7 +78,7 @@ export default class UploadComponent {
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
     if (!fileExtension || !this.supportedFormats.includes(fileExtension)) {
-      this.uploadStatus = ` Unsupported file type. Supported formats: ${this.supportedFormats.join(', ').toUpperCase()}`;
+      this.uploadStatus = `Unsupported file type. Supported formats: ${this.supportedFormats.join(', ').toUpperCase()}`;
       this.selectedFile = null;
       this.uploadProgress = 0;
       this.formulas = [];
@@ -98,7 +114,7 @@ export default class UploadComponent {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
       if (!fileExtension || !this.supportedFormats.includes(fileExtension)) {
-        this.uploadStatus = ` Unsupported file type. Supported formats: ${this.supportedFormats.join(', ').toUpperCase()}`;
+        this.uploadStatus = `Unsupported file type. Supported formats: ${this.supportedFormats.join(', ').toUpperCase()}`;
         return;
       }
 
@@ -120,13 +136,13 @@ export default class UploadComponent {
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    this.uploadStatus = '⏳ Analyzing document and extracting formulas...';
+    this.uploadStatus = 'Analyzing document and extracting formulas...';
     this.uploadProgress = 0;
     this.formulas = [];
     this.rawOutput = '';
     this.isLoading = true;
 
-    this.http.post<any>('http://127.0.0.1:5000/upload', formData, {
+    this.http.post<BackendResponse>('http://127.0.0.1:5000/upload', formData, {
       reportProgress: true,
       observe: 'events',
     }).subscribe({
@@ -134,13 +150,13 @@ export default class UploadComponent {
         if (event.type === HttpEventType.UploadProgress && event.total) {
           this.uploadProgress = Math.round((event.loaded / event.total) * 100);
         } else if (event.type === HttpEventType.Response) {
-          console.log('--- Response Received ---');
           console.log('Backend Response:', event.body);
 
           this.uploadProgress = 100;
           this.isLoading = false;
           this.formulas = event.body?.formulas ?? [];
-          this.rawOutput = event.body?.raw_output || '';
+          this.extractionMethod = event.body?.extraction_method || '';
+          this.totalFormulas = event.body?.total_formulas || 0;
 
           const status = event.body?.status;
           const message = event.body?.message || '';
@@ -148,19 +164,19 @@ export default class UploadComponent {
           switch (status) {
             case 'success':
               if (this.formulas.length > 0) {
-                this.uploadStatus = ` Analysis Complete! Extracted ${this.formulas.length} formulas from ${this.selectedFile?.name}`;
+                this.uploadStatus = `Analysis Complete! Extracted ${this.formulas.length} formulas from ${this.selectedFile?.name}`;
               } else {
-                this.uploadStatus = `⚠️ ${message}`;
+                this.uploadStatus = message;
               }
               break;
             case 'warning':
-              this.uploadStatus = `⚠️ ${message}`;
+              this.uploadStatus = message;
               break;
             case 'error':
-              this.uploadStatus = `❌ ${message}`;
+              this.uploadStatus = message;
               break;
             default:
-              this.uploadStatus = `✅ Processing completed for ${this.selectedFile?.name}`;
+              this.uploadStatus = `Processing completed for ${this.selectedFile?.name}`;
           }
 
           this.cdr.detectChanges();
@@ -168,7 +184,7 @@ export default class UploadComponent {
       },
       error: (err) => {
         console.error('Upload error:', err);
-        this.uploadStatus = '❌ Processing failed. Please try again or contact support.';
+        this.uploadStatus = 'Processing failed. Please try again or contact support.';
         this.uploadProgress = 0;
         this.formulas = [];
         this.rawOutput = '';
@@ -176,7 +192,6 @@ export default class UploadComponent {
         this.cdr.detectChanges();
       },
       complete: () => {
-        console.log('--- Upload Complete ---');
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -185,29 +200,35 @@ export default class UploadComponent {
 
   exportToExcel() {
     if (!this.formulas.length) {
-      this.uploadStatus = '⚠️ No formulas available for export.';
+      this.uploadStatus = 'No formulas available for export.';
       return;
     }
 
     try {
-      // Create Excel data with proper headers
       const excelData = this.formulas.map(formula => ({
-        'Acronym': formula.acronym,
-        'Full Name': formula.full_name,
-        'Description': formula.description,
-        'Formula': formula.formula
+        'Term Description': formula.term_description,
+        'Mathematical Relationship': formula.mathematical_relationship,
+        'Business Context': formula.business_context,
+        'Formula Explanation': formula.formula_explanation,
+        'Confidence Score': (formula.confidence * 100).toFixed(1) + '%',
+        'Variables': Object.entries(formula.variables_explained)
+                      .map(([key, value]) => `${key}: ${value}`)
+                      .join(' | '),
+        'Source Method': formula.source_method
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Insurance Formulas');
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Formula Analysis');
 
-      // Set column widths
       const colWidths = [
-        { wch: 12 }, // Acronym
-        { wch: 25 }, // Full Name
-        { wch: 40 }, // Description
-        { wch: 50 }, // Formula
+        { wch: 25 }, // Term Description
+        { wch: 40 }, // Mathematical Relationship
+        { wch: 35 }, // Business Context
+        { wch: 50 }, // Formula Explanation
+        { wch: 15 }, // Confidence Score
+        { wch: 60 }, // Variables
+        { wch: 20 }, // Source Method
       ];
       worksheet['!cols'] = colWidths;
 
@@ -215,12 +236,12 @@ export default class UploadComponent {
       const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
       
       const timestamp = new Date().toISOString().split('T')[0];
-      saveAs(blob, `insurance_formulas_${timestamp}.xlsx`);
+      saveAs(blob, `formula_analysis_${timestamp}.xlsx`);
       
-      this.uploadStatus = '✅ Formulas exported successfully!';
+      this.uploadStatus = 'Formulas exported successfully!';
     } catch (error) {
       console.error('Export error:', error);
-      this.uploadStatus = '❌ Failed to export formulas.';
+      this.uploadStatus = 'Failed to export formulas.';
     }
   }
 
@@ -236,27 +257,30 @@ export default class UploadComponent {
     this.rawOutput = '';
     this.showRawOutput = false;
     this.isLoading = false;
+    this.extractionMethod = '';
+    this.totalFormulas = 0;
     this.cdr.detectChanges();
   }
 
-  // Helper methods
   get hasFormulas(): boolean {
     return this.formulas.length > 0;
   }
 
   get isSuccess(): boolean {
-    return this.uploadStatus.includes('✅');
+    return this.uploadStatus.includes('Complete!') || this.uploadStatus.includes('successfully');
   }
 
   get isWarning(): boolean {
-    return this.uploadStatus.includes('⚠️');
+    return this.uploadStatus.includes('warning') || this.uploadStatus.includes('but no');
   }
 
   get isError(): boolean {
-    return this.uploadStatus.includes('❌');
+    return this.uploadStatus.includes('failed') || this.uploadStatus.includes('Unsupported');
   }
 
   get supportedFormatsText(): string {
     return this.supportedFormats.map(f => f.toUpperCase()).join(', ');
   }
+
+  
 }
