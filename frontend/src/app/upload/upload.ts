@@ -55,8 +55,7 @@ export default class UploadComponent {
   }
 
   loadSupportedFormats() {
-    this.http.get<any>('http://127.0.0.1:5000/supported-formats').subscribe({
-      next: (response) => {
+    this.http.get<any>('http://127.0.0.1:5000/').subscribe({      next: (response) => {
         this.supportedFormats = response.supported_formats || [];
         console.log('Supported formats:', this.supportedFormats);
       },
@@ -277,7 +276,7 @@ export default class UploadComponent {
   get isError(): boolean {
     return this.uploadStatus.includes('failed') || this.uploadStatus.includes('Unsupported');
   }
-
+ 
   get supportedFormatsText(): string {
     return this.supportedFormats.map(f => f.toUpperCase()).join(', ');
   }
