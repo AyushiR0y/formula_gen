@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule, HttpEventType } from '@angular/common/http';
 import { saveAs } from 'file-saver';
@@ -46,9 +47,13 @@ export default class UploadComponent {
   // Expose Object to template
   Object = Object;
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {
-    this.loadSupportedFormats();
-  }
+  constructor(
+  private http: HttpClient,
+  private cdr: ChangeDetectorRef,
+  private router: Router
+) {
+  this.loadSupportedFormats();
+}
 
   get allowedExtensions(): string[] {
     return this.supportedFormats;
@@ -130,7 +135,9 @@ export default class UploadComponent {
     if (!this.selectedFile) {
       this.uploadStatus = 'Please select a file to upload.';
       return;
+
     }
+  
 
     const formData = new FormData();
     formData.append('file', this.selectedFile);
@@ -260,6 +267,16 @@ export default class UploadComponent {
     this.totalFormulas = 0;
     this.cdr.detectChanges();
   }
+  goToDataProcessing() {
+    if (this.formulas.length > 0) {
+      this.router.navigate(['/process-data'], {
+        state: { formulas: this.formulas }
+      });
+    } else {
+      this.uploadStatus = '❗ Please extract formulas before proceeding to data processing.';
+    }
+  }
+
 
   get hasFormulas(): boolean {
     return this.formulas.length > 0;

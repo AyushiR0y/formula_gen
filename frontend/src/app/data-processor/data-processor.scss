@@ -1,0 +1,84 @@
+// data-processor.scss
+// Additional component-specific styles can be added here
+// The main styles are already included in the HTML template
+
+.data-processor-container {
+  // Component-specific overrides
+  .formula-status {
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  .upload-area {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &.drag-over {
+      transform: scale(1.02);
+      box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+    }
+  }
+  
+  .result-card {
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+  
+  .process-btn {
+    position: relative;
+    overflow: hidden;
+    
+    &.loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: loading 1.5s infinite;
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loading {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+// Dark mode support (if needed)
+@media (prefers-color-scheme: dark) {
+  .data-processor-container {
+    .upload-area {
+      background-color: #2d3748;
+      border-color: #4a5568;
+      color: #e2e8f0;
+      
+      &:hover, &.drag-over {
+        background-color: #1a202c;
+        border-color: #3182ce;
+      }
+    }
+    
+    .result-card {
+      background-color: #2d3748;
+      color: #e2e8f0;
+    }
+  }
+}

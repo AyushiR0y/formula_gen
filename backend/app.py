@@ -42,45 +42,51 @@ else:
 
 # --- INPUT VARIABLES DEFINITIONS ---
 INPUT_VARIABLES = {
-    'date_of_commencement': 'Date when the policy starts',
-    'fup': 'First Unpaid Premium date',
-    'entry_age': 'Age of the policyholder at policy inception',
-    'premium': 'Annual Premium amount',
-    'booking_frequency': 'Frequency of premium booking (monthly, quarterly, yearly)',
-    'booking_time': 'Duration for premium booking in years',
-    'ppt': 'Premium Paying Term - duration for paying premiums',
-    'sa': 'Sum Assured - guaranteed amount on maturity/death',
-    'income_benefit_amount': 'Amount of income benefit',
-    'income_benefit_frequency': 'Frequency of income benefit payout',
-    'surrender_date': 'Date when policy is surrendered',
+    'TERM_START_DATE': 'Date when the policy starts',
+    'FUP_Date': 'First Unpaid Premium date',
+    'ENTRY_AGE': 'Age of the policyholder at policy inception',
+    'FULL_TERM_PREMIUM': 'Annual Premium amount',
+    'BOOKING_FREQUENCY': 'Frequency of premium booking (monthly, quarterly, yearly)',
+    'PREMIUM_TERM': 'Premium Paying Term - duration for paying premiums',
+    'SUM_ASSURED': 'Sum Assured - guaranteed amount on maturity/death',
+    'Income_Benefit_Amount': 'Amount of income benefit',
+    'Income_Benefit_Frequency': 'Frequency of income benefit payout',
+    'DATE_OF_SURRENDER': 'Date when policy is surrendered',
     'no_of_premium_paid': 'Years passed since date of commencement till FUP',
-    'maturity_date': 'Date of commencement + (Booking time * 12 months)',
-    'policy_year': 'Years passed + 1 between date of commencement and surrender date'
+    'maturity_date': 'Date of commencement + (BENEFIT_TERM * 12 months)',
+    'policy_year': 'Years passed + 1 between date of commencement and surrender date',
+    'BENEFIT_TERM': 'The duration (in years) for which the policy benefits are payable',
+    'GSV_FACTOR': 'Guaranteed Surrender Value Factor, a percentage used to calculate the minimum guaranteed surrender value from total premiums paid.',
+    'SV_FACTOR': 'Surrender Value Factor',
+    'SSV2_FACTOR':'A special factor used to compute Special Surrender Value (SSV) related to return of premium (ROP)'
+
+
 }
 
 # Basic derived formulas that can be logically computed
 BASIC_DERIVED_FORMULAS = {
-    'no_of_premium_paid': 'Calculate based on difference between date_of_commencement and fup',
-    'policy_year': 'Calculate based on difference between date_of_commencement and surrender_date + 1',
-    'maturity_date': 'date_of_commencement + (booking_time * 12) months'
+    'no_of_premium_paid': 'Calculate based on difference between TERM_START_DATE and FUP_Date',
+    'policy_year': 'Calculate based on difference between TERM_START_DATE and DATE_OF_SURRENDER + 1',
+    'maturity_date': 'TERM_START_DATE + (BENEFIT_TERM* 12) months',
+    'PV':'Final surrender value paid'
 }
 
 # TARGET OUTPUT VARIABLES (formulas must be extracted from document)
 TARGET_OUTPUT_VARIABLES = [
-    'total_premium_paid',
-    'ten_times_ap', 
+    'TOTAL_PREMIUM_PAID',
+    'TEN_TIMES_AP', 
     'one_oh_five_percent_total_premium',
-    'sa_on_death',
-    'gsv_amount',
-    'paid_up_sa',
-    'paid_up_sa_on_death', 
+    'SUM_ASSURED_ON_DEATH',
+    'GSV',
+    'PAID_UP_SA',
+    'PAID_UP_SA_ON_DEATH', 
     'paid_up_income_benefit_amount',
-    'ssv1_amount',  # These were missing in extraction
-    'ssv2_amount',
-    'ssv3_amount',
-    'total_ssv_amount',
-    'surrender_value',
-    'system_paid'
+    'SSV1_AMT',  # These were missing in extraction
+    'SSV2_AMT',
+    'SSV3_AMT',
+    'SSV',
+    'SURRENDER_PAID_AMOUNT',
+    'PV'
 ]
 
 @dataclass
@@ -207,7 +213,7 @@ class DocumentFormulaExtractor:
             ssv_context = """
             NOTE: For SSV (Special Surrender Value) components:
             - SSV1 typically relates to present value of paid-up sum assured on death
-            - SSV2 typically relates to ROP (Return of Premium) benefit
+            - SSV2 typically relates to ROP (Return of Premium) or Total Premiums paid benefit
             - SSV3 typically relates to paid-up income instalments or survival benefits
             Look for these specific components in the surrender value calculations.
             """
@@ -278,7 +284,8 @@ class DocumentFormulaExtractor:
         3. IDENTIFY ONLY THE SPECIFIC VARIABLES used in surrender value calculation
         4. If document mentions GSV (Guaranteed Surrender Value) and SSV (Special Surrender Value), show relationship
         5. If multiple variants exist, show all variants
-        6. Extract the ACTUAL text from document that describes this calculation
+        6. Extract the ACTUAL text from document that describes this calculation.
+        7. ROP= Total premiums paid. Display total premiums in the formula wherever ROP is used.
         
         RESPONSE FORMAT:
         SURRENDER_FORMULA: [exact mathematical expression using available variables]
@@ -595,6 +602,15 @@ def upload_file():
             "status": "error",
             "formulas": []
         }), 500
+@app.route('/forward-formulas', methods=['POST'])
+def forward_formulas():
+    try:
+        data = request.get_json()
+        response = requests.post("http://127.0.0.1:5001/store-formulas", json=data)
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        return jsonify({"message": f"Forwarding failed: {str(e)}"}), 500
+
 
 @app.route('/test-extraction', methods=['POST'])
 def test_extraction():

@@ -196,6 +196,15 @@
             </td>
             
           </tr>
+          <!-- Go to data processing -->
+<div *ngIf="hasFormulas" style="margin-top: 20px;">
+  <button 
+    (click)="goToDataProcessing()" 
+    class="btn-next">
+    📤 Continue to Data Processing →
+  </button>
+</div>
+
         </tbody>
       </table>
     </div>

@@ -1,0 +1,462 @@
+<!-- data-processor.html -->
+<div class="data-processor-container">
+  <div class="header">
+    <h2>Data Processing & Formula Application</h2>
+    <p class="subtitle">Upload your data file to apply extracted formulas</p>
+  </div>
+
+  <!-- Formula Status -->
+  <div class="formula-status" [ngClass]="{'has-formulas': hasFormulas, 'no-formulas': !hasFormulas}">
+    <div class="status-icon">
+      <span *ngIf="hasFormulas">✓</span>
+      <span *ngIf="!hasFormulas">⚠</span>
+    </div>
+    <div class="status-text">
+      <span *ngIf="hasFormulas">{{extractedFormulas.length}} formulas ready</span>
+      <span *ngIf="!hasFormulas">No formulas available - please extract formulas first</span>
+    </div>
+  </div>
+
+  <!-- File Upload Section -->
+  <div class="upload-section">
+    <div class="upload-area" 
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)"
+         [ngClass]="{'drag-over': onDragOver, 'has-file': selectedFile}">
+      
+      <div class="upload-content">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">
+          <p *ngIf="!selectedFile" class="main-text">Drop your file here or click to browse</p>
+          <p *ngIf="selectedFile" class="main-text">{{selectedFile.name}}</p>
+          <p class="sub-text">Supports CSV, XLSX, XLS files</p>
+        </div>
+        <input type="file" 
+               #fileInput
+               (change)="onFileSelected($event)"
+               accept=".csv,.xlsx,.xls"
+               class="file-input">
+        <button type="button" 
+                class="browse-btn"
+                (click)="fileInput.click()">
+          Choose File
+        </button>
+      </div>
+    </div>
+
+    <!-- Upload Status -->
+    <div *ngIf="uploadStatus" class="upload-status" [ngClass]="getStatusClass()">
+      {{uploadStatus}}
+    </div>
+
+    <!-- Progress Bar -->
+    <div *ngIf="isLoading" class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+      </div>
+      <span class="progress-text">{{uploadProgress}}%</span>
+    </div>
+  </div>
+
+  <!-- Process Button -->
+  <div class="action-section">
+    <button class="process-btn" 
+            (click)="processData()" 
+            [disabled]="!selectedFile || !hasFormulas || isLoading"
+            [ngClass]="{'loading': isLoading}">
+      <span *ngIf="!isLoading">Process Data</span>
+      <span *ngIf="isLoading">Processing...</span>
+    </button>
+  </div>
+
+  <!-- Results Section -->
+  <div *ngIf="processingResult" class="results-section">
+    <h3>Processing Results</h3>
+    <div class="results-grid">
+      <div class="result-card">
+        <div class="result-number">{{processingResult.processed_policies}}</div>
+        <div class="result-label">Policies Processed</div>
+      </div>
+      <div class="result-card">
+        <div class="result-number">{{processingResult.successful_calculations}}</div>
+        <div class="result-label">Successful Calculations</div>
+      </div>
+      <div class="result-card">
+        <div class="result-number">{{processingResult.errors?.length || 0}}</div>
+        <div class="result-label">Errors</div>
+      </div>
+      <div class="result-card">
+        <div class="result-number">{{processingResult.processing_summary?.formulas_used}}</div>
+        <div class="result-label">Formulas Applied</div>
+      </div>
+    </div>
+
+    <!-- Error Details -->
+    <div *ngIf="processingResult.errors?.length > 0" class="error-details">
+      <h4>Processing Errors:</h4>
+      <ul>
+        <li *ngFor="let error of processingResult.errors">{{error}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Download Section -->
+  <div *ngIf="downloadReady" class="download-section">
+    <button class="download-btn" (click)="downloadResult()">
+      <span class="download-icon">⬇</span>
+      Download Processed File
+    </button>
+  </div>
+
+  <!-- Reset Button -->
+  <div class="reset-section">
+    <button class="reset-btn" (click)="reset()" [disabled]="isLoading">
+      Reset
+    </button>
+  </div>
+</div>
+
+<style>
+.data-processor-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h2 {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #666;
+  margin: 0;
+}
+
+.formula-status {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.formula-status.has-formulas {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.formula-status.no-formulas {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.status-icon {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.upload-section {
+  margin-bottom: 30px;
+}
+
+.upload-area {
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #fafafa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.upload-area:hover, .upload-area.drag-over {
+  border-color: #007bff;
+  background-color: #f8f9ff;
+}
+
+.upload-area.has-file {
+  border-color: #28a745;
+  background-color: #f8fff9;
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.upload-icon {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.upload-text .main-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  margin: 0;
+}
+
+.upload-text .sub-text {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0 0 0;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.browse-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.browse-btn:hover {
+  background-color: #0056b3;
+}
+
+.upload-status {
+  margin-top: 15px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.upload-status.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.upload-status.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.upload-status.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.progress-container {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #007bff;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #666;
+  min-width: 35px;
+}
+
+.action-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.process-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 150px;
+}
+
+.process-btn:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.process-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.process-btn.loading {
+  opacity: 0.7;
+}
+
+.results-section {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.results-section h3 {
+  margin-top: 0;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.result-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.result-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.result-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.error-details {
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.error-details h4 {
+  color: #c53030;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.error-details ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.error-details li {
+  color: #9b2c2c;
+  margin-bottom: 5px;
+}
+
+.download-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.download-btn {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.download-btn:hover {
+  background-color: #138496;
+  transform: translateY(-2px);
+}
+
+.download-icon {
+  font-size: 18px;
+}
+
+.reset-section {
+  text-align: center;
+}
+
+.reset-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.reset-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .data-processor-container {
+    padding: 15px;
+  }
+  
+  .upload-area {
+    padding: 30px 15px;
+  }
+  
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
