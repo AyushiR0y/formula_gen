@@ -4,13 +4,6 @@ This is a full-stack AI-powered tool that lets users upload product specificatio
 
 
 
-**🛠️ Tech Stack**
-
-Frontend: Angular
-
-Backend: Flask (Python)
-
-LLM Providers: Google Gemini API + HuggingFace API
 
 Local Parser: Regex-based formula extractor
 
