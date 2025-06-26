@@ -40,54 +40,68 @@ else:
     genai.configure(api_key=API_KEY)
     MOCK_MODE = False
 
-# --- INPUT VARIABLES DEFINITIONS ---
-INPUT_VARIABLES = {
-    'TERM_START_DATE': 'Date when the policy starts',
-    'FUP_Date': 'First Unpaid Premium date',
+# --- GENERIC INSURANCE TERMS DICTIONARY ---
+GENERIC_INSURANCE_TERMS = {
+    'TERM_START_DATE': 'Policy commencement date',
+    'DATE_OF_COMMENCEMENT': 'TERM_START_DATE',
     'ENTRY_AGE': 'Age of the policyholder at policy inception',
-    'FULL_TERM_PREMIUM': 'Annual Premium amount',
-    'BOOKING_FREQUENCY': 'Frequency of premium booking (monthly, quarterly, yearly)',
+    'BENEFIT_TERM': 'Duration for which benefits are payable in months',
+    'ISSUE_AGE': 'ENTRY_AGE',
+    'PREMIUM': 'Premium amount (annual/monthly/quarterly)',
+    'FULL_TERM_PREMIUM': 'PREMIUM',
+    'ANNUALISED_PREMIUM': 'Annual premium amount',
+    'POLICY_YEAR':'ROUND(YEARFRAC(TERM_START_DATE, DATE_OF_SURRENDER)+1,0)',
+    'MONTHLY_PREMIUM': 'Monthly premium amount',
+    'PREMIUM_FREQUENCY': 'Frequency of premium payment',
+    'BOOKING_FREQUENCY': 'Frequency of premium booking',
+    'BOOKING_TIME': 'Duration for premium booking in years',
+    'POLICY_TERM': 'Total duration of the policy',
     'PREMIUM_TERM': 'Premium Paying Term - duration for paying premiums',
-    'SUM_ASSURED': 'Sum Assured - guaranteed amount on maturity/death',
-    'Income_Benefit_Amount': 'Amount of income benefit',
-    'Income_Benefit_Frequency': 'Frequency of income benefit payout',
-    'DATE_OF_SURRENDER': 'Date when policy is surrendered',
-    'no_of_premium_paid': 'Years passed since date of commencement till FUP',
-    'maturity_date': 'Date of commencement + (BENEFIT_TERM * 12 months)',
-    'policy_year': 'Years passed + 1 between date of commencement and surrender date',
-    'BENEFIT_TERM': 'The duration (in years) for which the policy benefits are payable',
-    'GSV_FACTOR': 'Guaranteed Surrender Value Factor, a percentage used to calculate the minimum guaranteed surrender value from total premiums paid.',
-    'SV_FACTOR': 'Surrender Value Factor',
-    'SSV2_FACTOR':'A special factor used to compute Special Surrender Value (SSV) related to return of premium (ROP)'
-
-
-}
-
-# Basic derived formulas that can be logically computed
-BASIC_DERIVED_FORMULAS = {
-    'no_of_premium_paid': 'Calculate based on difference between TERM_START_DATE and FUP_Date',
-    'policy_year': 'Calculate based on difference between TERM_START_DATE and DATE_OF_SURRENDER + 1',
-    'maturity_date': 'TERM_START_DATE + (BENEFIT_TERM* 12) months',
-    'PV':'Final surrender value paid'
-}
-
-# TARGET OUTPUT VARIABLES (formulas must be extracted from document)
-TARGET_OUTPUT_VARIABLES = [
-    'TOTAL_PREMIUM_PAID',
-    'TEN_TIMES_AP', 
-    'one_oh_five_percent_total_premium',
-    'SUM_ASSURED_ON_DEATH',
-    'GSV',
-    'PAID_UP_SA',
-    'PAID_UP_SA_ON_DEATH', 
-    'paid_up_income_benefit_amount',
-    'SSV1_AMT',  # These were missing in extraction
-    'SSV2_AMT',
-    'SSV3_AMT',
-    'SSV',
-    'SURRENDER_PAID_AMOUNT',
-    'PV'
-]
+    'SA': 'Sum Assured - guaranteed amount on maturity/death',
+    'SUM_ASSURED': 'Basic sum assured amount',
+    'DEATH_BENEFIT': 'Benefit payable on death',
+    'MATURITY_BENEFIT': 'Benefit payable on maturity',
+    'INCOME_BENEFIT_AMOUNT': 'Amount of income benefit',
+    'INCOME_BENEFIT_FREQUENCY': 'Frequency of income benefit payout',
+    'SURRENDER_DATE': 'Date when policy is surrendered',
+    'MATURITY_DATE': 'EDATE(TERM_START_DATE,(BENEFIT_TERM*12))',
+    'FUP': 'First Unpaid Premium date',
+    'FIRST_UNPAID_PREMIUM_DATE': 'Date of first unpaid premium',
+    'NO_OF_PREMIUM_PAID': 'Number of premiums paid',
+    'PREMIUMS_PAID_COUNT': 'Count of premiums paid',
+    'POLICY_YEAR': 'Current policy year',
+    'TOTAL_PREMIUM_PAID': 'Total amount of premiums paid',
+    'GSV': 'Guaranteed Surrender Value',
+    'SSV': 'Special Surrender Value',
+    'SSV1_AMT': 'Special Surrender Value component 1',
+    'SSV2_AMT': 'Special Surrender Value component 2', 
+    'SSV3_AMT': 'Special Surrender Value component 3',
+    'PAID_UP_SA': 'Paid-up Sum Assured',
+    'PAID_UP_VALUE': 'Paid-up policy value',
+    'LOYALTY_ADDITION': 'Loyalty addition amount',
+    'BONUS': 'Bonus amount',
+    'CASH_VALUE': 'Cash value of the policy',
+    'SURRENDER_CHARGE': 'Charges applicable on surrender',
+    'MORTALITY_CHARGE': 'Mortality charges',
+    'ADMIN_CHARGE': 'Administration charges',
+    'FUND_VALUE': 'Current fund value',
+    'NAV': 'Net Asset Value',
+    'UNITS': 'Number of units allocated',
+    'UNIT_PRICE': 'Price per unit',
+    'TOP_UP_PREMIUM': 'Additional premium paid',
+    'PARTIAL_WITHDRAWAL': 'Amount withdrawn partially',
+    'LOAN_AMOUNT': 'Policy loan amount',
+    'INTEREST_RATE': 'Interest rate applicable',
+    'DISCOUNT_RATE': 'Discount rate for calculations',
+    'MORTALITY_RATE': 'Mortality rate factor',
+    'LAPSE_RATE': 'Policy lapse rate',
+    'GUARANTEED_RATE': 'Guaranteed interest rate',
+    'CURRENT_RATE': 'Current interest rate',
+    'PROJECTED_RATE': 'Projected interest rate'
+    'SV_FACTOR: Surrender Value Factoradditional factor (sometimes policy-specific) used to adjust GSV or non-guaranteed components.', 
+    'SSV2_FACTOR': 'Special Surrender Value Factor - additional factor used to adjust SSV component based on ROP or additional benefits.',
+    'SSV3_FACTOR': 'Special Surrender Value Factor - additional factor used to adjust SSV component based on paid-up income benefits or survival benefits.'
+}   
 
 @dataclass
 class ExtractedFormula:
@@ -98,7 +112,13 @@ class ExtractedFormula:
     confidence: float
     source_method: str
     document_evidence: str
-    specific_variables: Dict[str, str]  # Only variables used in this formula
+    specific_variables: Dict[str, str]
+    variant_specific: bool = False
+    applicable_variants: List[str] = None
+    
+    def __post_init__(self):
+        if self.applicable_variants is None:
+            self.applicable_variants = []
     
     def to_dict(self):
         return asdict(self)
@@ -106,62 +126,71 @@ class ExtractedFormula:
 @dataclass
 class DocumentExtractionResult:
     input_variables: Dict[str, str]
-    basic_derived_formulas: Dict[str, str]
+    output_variables: List[str]
     extracted_formulas: List[ExtractedFormula]
     extraction_summary: str
     overall_confidence: float
     surrender_formula_found: bool
+    variants_detected: List[str]
     
     def to_dict(self):
         return asdict(self)
 
 class DocumentFormulaExtractor:
-    """Extracts formulas purely from document content without hardcoded formulas"""
+    """Extracts formulas from document content using custom variables"""
     
     def __init__(self):
-        self.input_variables = INPUT_VARIABLES
-        self.basic_derived = BASIC_DERIVED_FORMULAS
-        self.target_outputs = TARGET_OUTPUT_VARIABLES
+        self.generic_terms = GENERIC_INSURANCE_TERMS
+        self.input_variables = {}
+        self.output_variables = []
+        self.variants_detected = []
+        
+    def set_custom_variables(self, input_vars: Dict[str, str], output_vars: List[str]):
+        """Set custom input and output variables"""
+        self.input_variables = input_vars
+        self.output_variables = output_vars
+        print(f"📝 Custom variables set: {len(input_vars)} inputs, {len(output_vars)} outputs")
         
     def extract_formulas_from_document(self, text: str) -> DocumentExtractionResult:
-        """Extract all formulas from document text"""
+        """Extract all formulas from document text using custom variables"""
         
         if MOCK_MODE or not API_KEY:
             return self._explain_no_extraction()
         
         try:
-            print("🔍 Starting document-based formula extraction...")
+            print("🔍 Starting document-based formula extraction with custom variables...")
             
-            # First, analyze document structure and identify formula sections
+            # First detect variants in the document
+            self.variants_detected = self._detect_variants(text)
+            print(f"🔍 Variants detected: {self.variants_detected}")
+            
+            # Identify formula sections
             formula_sections = self._identify_formula_sections(text)
             
-            # Extract surrender value formula with special focus
-            surrender_result = self._extract_surrender_formula_specifically(text)
-            
-            # Extract all other formulas from document
+            # Extract all formulas
             extracted_formulas = []
             
-            for formula_name in self.target_outputs:
+            for formula_name in self.output_variables:
                 print(f"🔍 Extracting: {formula_name}")
                 
-                if formula_name == 'surrender_value' and surrender_result:
-                    extracted_formulas.append(surrender_result)
-                else:
-                    formula_result = self._extract_formula_from_document(text, formula_name, formula_sections)
-                    if formula_result:
-                        extracted_formulas.append(formula_result)
+                # Check if this formula might be variant-specific
+                formula_results = self._extract_formula_with_variants(text, formula_name, formula_sections)
+                
+                if formula_results:
+                    extracted_formulas.extend(formula_results)
                 
                 time.sleep(0.2)  # Rate limiting
             
-            surrender_found = any(f.formula_name == 'surrender_value' for f in extracted_formulas)
+            surrender_found = any(f.formula_name.lower() == 'surrender_value' for f in extracted_formulas)
             
             return DocumentExtractionResult(
                 input_variables=self.input_variables,
-                basic_derived_formulas=self.basic_derived,
+                output_variables=self.output_variables,
                 extracted_formulas=extracted_formulas,
-                extraction_summary=f"Document analysis complete. Extracted {len(extracted_formulas)} formulas from source document.",
+                extraction_summary=f"Document analysis complete. Extracted {len(extracted_formulas)} formulas using custom variables.",
                 overall_confidence=sum(f.confidence for f in extracted_formulas) / len(extracted_formulas) if extracted_formulas else 0.0,
-                surrender_formula_found=surrender_found
+                surrender_formula_found=surrender_found,
+                variants_detected=self.variants_detected
             )
             
         except Exception as e:
@@ -169,23 +198,194 @@ class DocumentFormulaExtractor:
             print(f"Traceback: {traceback.format_exc()}")
             return self._explain_no_extraction()
     
+    def _detect_variants(self, text: str) -> List[str]:
+        """Detect product variants in the document"""
+        
+        prompt = f"""
+        Analyze this insurance document to identify different product variants or options.
+        
+        DOCUMENT: {text}
+        
+        Look for:
+        1. Different product plans (Plan A, Plan B, Option 1, Option 2, etc.)
+        2. Different benefit structures
+        3. Different calculation methods for the same benefit
+        4. Age-based variations
+        5. Premium-based variations
+        6. Any mentions of "variant", "option", "plan", "type"
+        
+        Return ONLY the variant names/identifiers found, one per line.
+        If no clear variants are found, return "STANDARD"
+        
+        Examples:
+        Plan A
+        Plan B
+        Regular Option
+        Premium Option
+        """
+        
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt)
+            
+            variants = [line.strip() for line in response.text.split('\n') if line.strip()]
+            return variants if variants else ["STANDARD"]
+            
+        except Exception as e:
+            print(f"Error detecting variants: {e}")
+            return ["STANDARD"]
+    
+    def _extract_formula_with_variants(self, text: str, formula_name: str, formula_sections: List[str]) -> List[ExtractedFormula]:
+        """Extract formula considering variants"""
+        
+        search_text = "\n".join(formula_sections) if formula_sections else text
+        
+        # Create variable mapping prompt
+        variable_context = self._create_variable_context()
+        
+        prompt = f"""
+        Extract the formula for "{formula_name}" from this insurance document.
+        
+        DOCUMENT CONTENT: {search_text}
+        
+        CUSTOM INPUT VARIABLES: {self.input_variables}
+        
+        VARIABLE MAPPING CONTEXT: {variable_context}
+        
+        DETECTED VARIANTS: {self.variants_detected}
+        
+        INSTRUCTIONS:
+        1. Find how "{formula_name}" is calculated in this document
+        2. Use ONLY the custom input variable names provided above
+        3. Keep variable names in EXACT format as provided (e.g., ENTRY_AGE, not entry_age)
+        4. If formula differs by variant, extract each variant separately
+        5. If no variant-specific differences, extract one formula for all variants
+        6. Map document terms to custom variables using the context provided
+        
+        RESPONSE FORMAT for each variant (if applicable):
+        VARIANT: [variant name or "ALL" if applies to all]
+        FORMULA: [mathematical expression using custom variable names]
+        VARIABLES_USED: [comma-separated list of custom variables actually used]
+        DOCUMENT_EVIDENCE: [exact text that supports this]
+        CONTEXT: [business explanation]
+        CONFIDENCE: [0.1-1.0]
+        VARIANT_SPECIFIC: [YES/NO]
+        ---
+        
+        If formula not found, return "NOT_FOUND"
+        """
+        
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt)
+            
+            if "NOT_FOUND" in response.text:
+                return []
+                
+            return self._parse_variant_formula_response(response.text, formula_name)
+            
+        except Exception as e:
+            print(f"Error extracting {formula_name}: {e}")
+            return []
+    
+    def _create_variable_context(self) -> str:
+        """Create context for variable mapping"""
+        context = "VARIABLE MAPPING CONTEXT:\n"
+        
+        # Add custom variables
+        for var_name, description in self.input_variables.items():
+            context += f"{var_name}: {description}\n"
+        
+        # Add generic terms for reference
+        context += "\nGENERIC INSURANCE TERMS (for reference):\n"
+        for term, desc in self.generic_terms.items():
+            context += f"{term}: {desc}\n"
+            
+        return context
+    
+    def _parse_variant_formula_response(self, response_text: str, formula_name: str) -> List[ExtractedFormula]:
+        """Parse variant-aware formula response"""
+        
+        extracted_formulas = []
+        
+        # Split by variant sections
+        sections = response_text.split('---')
+        
+        for section in sections:
+            if not section.strip():
+                continue
+                
+            try:
+                # Extract variant
+                variant_match = re.search(r'VARIANT:\s*(.+?)(?=\nFORMULA|$)', section, re.IGNORECASE)
+                variant = variant_match.group(1).strip() if variant_match else "ALL"
+                
+                # Extract formula
+                formula_match = re.search(r'FORMULA:\s*(.+?)(?=\nVARIABLES_USED|$)', section, re.DOTALL | re.IGNORECASE)
+                formula_expression = formula_match.group(1).strip() if formula_match else "Formula not found"
+                
+                # Extract variables used
+                variables_match = re.search(r'VARIABLES_USED:\s*(.+?)(?=\nDOCUMENT_EVIDENCE|$)', section, re.IGNORECASE)
+                variables_str = variables_match.group(1).strip() if variables_match else ""
+                specific_variables = self._parse_specific_variables(variables_str)
+                
+                # Extract document evidence
+                evidence_match = re.search(r'DOCUMENT_EVIDENCE:\s*(.+?)(?=\nCONTEXT|$)', section, re.DOTALL | re.IGNORECASE)
+                document_evidence = evidence_match.group(1).strip() if evidence_match else "No evidence found"
+                
+                # Extract context
+                context_match = re.search(r'CONTEXT:\s*(.+?)(?=\nCONFIDENCE|$)', section, re.DOTALL | re.IGNORECASE)
+                business_context = context_match.group(1).strip() if context_match else f"Calculation for {formula_name}"
+                
+                # Extract confidence
+                confidence_match = re.search(r'CONFIDENCE:\s*([0-9]*\.?[0-9]+)', section, re.IGNORECASE)
+                confidence = float(confidence_match.group(1)) if confidence_match else 0.5
+                
+                # Extract variant specific flag
+                variant_specific_match = re.search(r'VARIANT_SPECIFIC:\s*(YES|NO)', section, re.IGNORECASE)
+                variant_specific = variant_specific_match.group(1).upper() == "YES" if variant_specific_match else False
+                
+                # Create formula name with variant if applicable
+                final_formula_name = f"{formula_name}" if variant == "ALL" else f"{formula_name}_{variant}"
+                applicable_variants = [variant] if variant != "ALL" else self.variants_detected
+                
+                extracted_formula = ExtractedFormula(
+                    formula_name=final_formula_name,
+                    formula_expression=formula_expression,
+                    variants_info=f"Variant: {variant}",
+                    business_context=business_context,
+                    confidence=confidence,
+                    source_method='document_extraction',
+                    document_evidence=document_evidence,
+                    specific_variables=specific_variables,
+                    variant_specific=variant_specific,
+                    applicable_variants=applicable_variants
+                )
+                
+                extracted_formulas.append(extracted_formula)
+                
+            except Exception as e:
+                print(f"Error parsing formula section: {e}")
+                continue
+        
+        return extracted_formulas
+    
     def _identify_formula_sections(self, text: str) -> List[str]:
         """Identify sections of document that contain formulas"""
         
         prompt = f"""
-        Analyze this insurance document and identify all sections that contain mathematical formulas, calculations, or surrender value computations.
+        Analyze this insurance document and identify all sections that contain mathematical formulas, calculations, or benefit computations.
         
         DOCUMENT: {text}
         
         TASK: Extract ONLY the text sections that contain:
         1. Mathematical formulas (with = signs, calculations)
-        2. Surrender value calculations (GSV, SSV, SSV1, SSV2, SSV3)
-        3. Benefit calculations
-        4. Premium calculations
-        5. Any text that shows how values are computed
+        2. Benefit calculations (surrender value, maturity value, etc.)
+        3. Premium calculations
+        4. Any text that shows how values are computed
+        5. Variant-specific calculations
         
         Return each relevant section as a separate block.
-        Focus especially on surrender value, GSV, SSV, paid-up calculations.
         
         FORMAT: Return sections separated by "---SECTION---"
         """
@@ -199,223 +399,20 @@ class DocumentFormulaExtractor:
             
         except Exception as e:
             print(f"Error identifying formula sections: {e}")
-            return [text]  # Return full text if section identification fails
-    
-    def _extract_formula_from_document(self, text: str, formula_name: str, formula_sections: List[str]) -> Optional[ExtractedFormula]:
-        """Extract specific formula from document sections with variable identification"""
-        
-        # Use formula sections if available, otherwise full text
-        search_text = "\n".join(formula_sections) if formula_sections else text
-        
-        # Special handling for SSV components
-        ssv_context = ""
-        if formula_name in ['ssv1_amount', 'ssv2_amount', 'ssv3_amount']:
-            ssv_context = """
-            NOTE: For SSV (Special Surrender Value) components:
-            - SSV1 typically relates to present value of paid-up sum assured on death
-            - SSV2 typically relates to ROP (Return of Premium) or Total Premiums paid benefit
-            - SSV3 typically relates to paid-up income instalments or survival benefits
-            Look for these specific components in the surrender value calculations.
-            """
-        
-        prompt = f"""
-        Extract the formula for "{formula_name}" from this insurance document content.
-        
-        DOCUMENT CONTENT: {search_text}
-        
-        AVAILABLE VARIABLES: {list(self.input_variables.keys())}
-        BASIC DERIVED: {self.basic_derived}
-        
-        TARGET: Find how "{formula_name}" is calculated in this document.
-        {ssv_context}
-        
-        INSTRUCTIONS:
-        1. Look for explicit formulas, calculation methods, or mathematical relationships
-        2. Express using only the available variable names above
-        3. IDENTIFY ONLY THE SPECIFIC VARIABLES used in this formula
-        4. Extract exact supporting text from document
-        5. If not explicitly stated but can be logically derived from context, derive it
-        6. If truly not found or derivable, return "NOT_FOUND"
-        
-        RESPONSE FORMAT:
-        FORMULA: [mathematical expression using only relevant variables]
-        SPECIFIC_VARIABLES: [comma-separated list of variables actually used in this formula]
-        DOCUMENT_EVIDENCE: [exact text that supports this]
-        CONTEXT: [business explanation]
-        METHOD: [EXPLICIT/DERIVED/NOT_FOUND]
-        CONFIDENCE: [0.1-1.0]
-        
-        Example:
-        FORMULA: premium * no_of_premium_paid
-        SPECIFIC_VARIABLES: premium, no_of_premium_paid
-        DOCUMENT_EVIDENCE: "The total premium paid is calculated by multiplying..."
-        CONTEXT: "Total premiums received by company"
-        METHOD: EXPLICIT
-        CONFIDENCE: 0.9
-        """
-        
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(prompt)
-            
-            if "NOT_FOUND" in response.text:
-                return None
-                
-            return self._parse_formula_response(response.text, formula_name)
-            
-        except Exception as e:
-            print(f"Error extracting {formula_name}: {e}")
-            return None
-    
-    def _extract_surrender_formula_specifically(self, text: str) -> Optional[ExtractedFormula]:
-        """Special focused extraction for surrender value formula"""
-        
-        prompt = f"""
-        CRITICAL TASK: Extract the surrender value calculation formula from this insurance document.
-        
-        DOCUMENT: {text}
-        
-        AVAILABLE INPUT VARIABLES: {list(self.input_variables.keys())}
-        BASIC DERIVED FORMULAS: {self.basic_derived}
-        
-        REQUIREMENTS:
-        1. Find the EXACT surrender value calculation method from the document
-        2. Express formula using only the available variable names above
-        3. IDENTIFY ONLY THE SPECIFIC VARIABLES used in surrender value calculation
-        4. If document mentions GSV (Guaranteed Surrender Value) and SSV (Special Surrender Value), show relationship
-        5. If multiple variants exist, show all variants
-        6. Extract the ACTUAL text from document that describes this calculation.
-        7. ROP= Total premiums paid. Display total premiums in the formula wherever ROP is used.
-        
-        RESPONSE FORMAT:
-        SURRENDER_FORMULA: [exact mathematical expression using available variables]
-        SPECIFIC_VARIABLES: [comma-separated list of variables actually used]
-        VARIANTS: [if multiple calculation methods exist]
-        DOCUMENT_EVIDENCE: [exact text from document that supports this formula]
-        BUSINESS_LOGIC: [explanation of when/how this applies]
-        CONFIDENCE: [0.1-1.0 based on clarity in document]
-        
-        If surrender value is not clearly defined in document, respond with "NOT_FOUND"
-        """
-        
-        try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(prompt)
-            
-            if "NOT_FOUND" in response.text:
-                return None
-                
-            return self._parse_surrender_response(response.text)
-            
-        except Exception as e:
-            print(f"Error extracting surrender formula: {e}")
-            return None
-    
-    def _parse_surrender_response(self, response_text: str) -> Optional[ExtractedFormula]:
-        """Parse surrender formula response"""
-        
-        try:
-            # Extract surrender formula
-            formula_match = re.search(r'SURRENDER_FORMULA:\s*(.+?)(?=\nSPECIFIC_VARIABLES|$)', response_text, re.DOTALL | re.IGNORECASE)
-            formula_expression = formula_match.group(1).strip() if formula_match else "Formula not clearly defined"
-            
-            # Extract specific variables
-            variables_match = re.search(r'SPECIFIC_VARIABLES:\s*(.+?)(?=\nVARIANTS|$)', response_text, re.DOTALL | re.IGNORECASE)
-            specific_vars_str = variables_match.group(1).strip() if variables_match else ""
-            specific_variables = self._parse_specific_variables(specific_vars_str)
-            
-            # Extract variants
-            variants_match = re.search(r'VARIANTS:\s*(.+?)(?=\nDOCUMENT_EVIDENCE|$)', response_text, re.DOTALL | re.IGNORECASE)
-            variants_info = variants_match.group(1).strip() if variants_match else "Single method"
-            
-            # Extract document evidence
-            evidence_match = re.search(r'DOCUMENT_EVIDENCE:\s*(.+?)(?=\nBUSINESS_LOGIC|$)', response_text, re.DOTALL | re.IGNORECASE)
-            document_evidence = evidence_match.group(1).strip() if evidence_match else "Evidence not extracted"
-            
-            # Extract business logic
-            logic_match = re.search(r'BUSINESS_LOGIC:\s*(.+?)(?=\nCONFIDENCE|$)', response_text, re.DOTALL | re.IGNORECASE)
-            business_context = logic_match.group(1).strip() if logic_match else "Surrender value calculation"
-            
-            # Extract confidence
-            confidence_match = re.search(r'CONFIDENCE:\s*([0-9]*\.?[0-9]+)', response_text, re.IGNORECASE)
-            confidence = float(confidence_match.group(1)) if confidence_match else 0.5
-            
-            return ExtractedFormula(
-                formula_name='surrender_value',
-                formula_expression=formula_expression,
-                variants_info=variants_info,
-                business_context=business_context,
-                confidence=confidence,
-                source_method='document_extraction',
-                document_evidence=document_evidence,
-                specific_variables=specific_variables
-            )
-            
-        except Exception as e:
-            print(f"Error parsing surrender response: {e}")
-            return None
-    
-    def _parse_formula_response(self, response_text: str, formula_name: str) -> Optional[ExtractedFormula]:
-        """Parse general formula response"""
-        
-        try:
-            # Extract formula
-            formula_match = re.search(r'FORMULA:\s*(.+?)(?=\nSPECIFIC_VARIABLES|$)', response_text, re.DOTALL | re.IGNORECASE)
-            formula_expression = formula_match.group(1).strip() if formula_match else "Formula not found"
-            
-            # Extract specific variables
-            variables_match = re.search(r'SPECIFIC_VARIABLES:\s*(.+?)(?=\nDOCUMENT_EVIDENCE|$)', response_text, re.DOTALL | re.IGNORECASE)
-            specific_vars_str = variables_match.group(1).strip() if variables_match else ""
-            specific_variables = self._parse_specific_variables(specific_vars_str)
-            
-            # Extract document evidence
-            evidence_match = re.search(r'DOCUMENT_EVIDENCE:\s*(.+?)(?=\nCONTEXT|$)', response_text, re.DOTALL | re.IGNORECASE)
-            document_evidence = evidence_match.group(1).strip() if evidence_match else "No supporting text found"
-            
-            # Extract context
-            context_match = re.search(r'CONTEXT:\s*(.+?)(?=\nMETHOD|$)', response_text, re.DOTALL | re.IGNORECASE)
-            business_context = context_match.group(1).strip() if context_match else f"Calculation for {formula_name}"
-            
-            # Extract method
-            method_match = re.search(r'METHOD:\s*(.+?)(?=\nCONFIDENCE|$)', response_text, re.IGNORECASE)
-            method = method_match.group(1).strip() if method_match else "UNKNOWN"
-            
-            # Extract confidence
-            confidence_match = re.search(r'CONFIDENCE:\s*([0-9]*\.?[0-9]+)', response_text, re.IGNORECASE)
-            confidence = float(confidence_match.group(1)) if confidence_match else 0.3
-            
-            return ExtractedFormula(
-                formula_name=formula_name,
-                formula_expression=formula_expression,
-                variants_info=f"Extraction method: {method}",
-                business_context=business_context,
-                confidence=confidence,
-                source_method='document_extraction',
-                document_evidence=document_evidence,
-                specific_variables=specific_variables
-            )
-            
-        except Exception as e:
-            print(f"Error parsing formula response for {formula_name}: {e}")
-            return None
+            return [text]
     
     def _parse_specific_variables(self, variables_str: str) -> Dict[str, str]:
         """Parse specific variables from comma-separated string"""
         
         specific_variables = {}
         if variables_str:
-            # Split by comma and clean up
             var_names = [var.strip() for var in variables_str.split(',')]
             
-            # Get descriptions from INPUT_VARIABLES
             for var_name in var_names:
                 if var_name in self.input_variables:
                     specific_variables[var_name] = self.input_variables[var_name]
-                elif var_name in self.basic_derived:
-                    specific_variables[var_name] = self.basic_derived[var_name]
                 else:
-                    # Handle case where variable might not be in our predefined list
-                    specific_variables[var_name] = f"Variable used in calculation: {var_name}"
+                    specific_variables[var_name] = f"Variable: {var_name}"
         
         return specific_variables
     
@@ -424,11 +421,12 @@ class DocumentFormulaExtractor:
         
         return DocumentExtractionResult(
             input_variables=self.input_variables,
-            basic_derived_formulas=self.basic_derived,
+            output_variables=self.output_variables,
             extracted_formulas=[],
-            extraction_summary="Cannot extract formulas from document - GEMINI_API_KEY required for document analysis. This system extracts formulas directly from insurance policy documents, especially surrender value calculations.",
+            extraction_summary="Cannot extract formulas from document - GEMINI_API_KEY required for document analysis.",
             overall_confidence=0.0,
-            surrender_formula_found=False
+            surrender_formula_found=False,
+            variants_detected=[]
         )
 
 # Initialize the document extractor
@@ -471,48 +469,35 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         "status": "healthy",
-        "service": "Document-Based Formula Extractor",
-        "version": "7.1",
+        "service": "Enhanced Document Formula Extractor",
+        "version": "8.0",
         "api_key_configured": not MOCK_MODE,
         "supported_formats": list(ALLOWED_EXTENSIONS),
-        "input_variables": len(INPUT_VARIABLES),
-        "target_outputs": len(TARGET_OUTPUT_VARIABLES),
+        "generic_terms_count": len(GENERIC_INSURANCE_TERMS),
         "features": [
-            "Extract formulas from document content only",
-            "No hardcoded formulas",
-            "Special focus on surrender value calculations",
-            "Document evidence tracking",
-            "Confidence scoring based on document clarity",
-            "Formula-specific variable identification"
-        ],
-        "note": "Requires GEMINI_API_KEY for document analysis"
+            "Custom input/output variables",
+            "Consistent variable formatting",
+            "Variant-specific formula extraction",
+            "Editable formulas",
+            "Generic insurance terms dictionary"
+        ]
     })
 
-@app.route('/input-variables', methods=['GET'])
-def get_input_variables():
-    """Get the defined input variables"""
+@app.route('/generic-terms', methods=['GET'])
+def get_generic_terms():
+    """Get the generic insurance terms dictionary"""
     return jsonify({
-        "input_variables": INPUT_VARIABLES,
-        "basic_derived_formulas": BASIC_DERIVED_FORMULAS,
-        "count": len(INPUT_VARIABLES)
-    })
-
-@app.route('/target-formulas', methods=['GET'])
-def get_target_formulas():
-    """Get the target output formulas"""
-    return jsonify({
-        "target_formulas": TARGET_OUTPUT_VARIABLES,
-        "count": len(TARGET_OUTPUT_VARIABLES),
-        "surrender_focus": "surrender_value is the primary focus",
-        "note": "All formulas must be extracted from input documents"
+        "generic_terms": GENERIC_INSURANCE_TERMS,
+        "count": len(GENERIC_INSURANCE_TERMS)
     })
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    """Document-based formula extraction endpoint"""
+    """Enhanced document-based formula extraction with custom variables"""
     try:
-        print("📋 Starting document-based formula extraction...")
+        print("📋 Starting enhanced document-based formula extraction...")
         
+        # Get form data
         if 'file' not in request.files:
             return jsonify({"message": "No file part", "status": "error"}), 400
 
@@ -527,7 +512,23 @@ def upload_file():
                 "status": "error"
             }), 400
 
-        # Secure filename
+        # Get custom variables from form data
+        input_variables_json = request.form.get('input_variables', '{}')
+        output_variables_json = request.form.get('output_variables', '[]')
+        
+        try:
+            input_variables = json.loads(input_variables_json)
+            output_variables = json.loads(output_variables_json)
+        except json.JSONDecodeError:
+            return jsonify({
+                "message": "Invalid JSON in variables data",
+                "status": "error"
+            }), 400
+
+        # Set custom variables in extractor
+        document_extractor.set_custom_variables(input_variables, output_variables)
+
+        # Process file
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
@@ -553,45 +554,46 @@ def upload_file():
         except:
             pass
 
-        # Determine status
-        if not MOCK_MODE and extraction_result.extracted_formulas:
-            message = f"Successfully extracted {len(extraction_result.extracted_formulas)} formulas from document."
-            status = "success"
-        elif not MOCK_MODE and not extraction_result.extracted_formulas:
-            message = "Document processed but no clear formulas found. Document may not contain explicit calculations."
-            status = "warning"
-        else:
-            message = "API key required for document analysis. Please configure GEMINI_API_KEY."
-            status = "error"
-
-        # Convert extracted formulas to the format expected by frontend
+        # Convert to frontend format
         frontend_formulas = []
         for formula in extraction_result.extracted_formulas:
             frontend_formulas.append({
+                "id": f"{formula.formula_name}_{hash(formula.formula_expression) % 10000}",
                 "term_description": formula.formula_name,
                 "mathematical_relationship": formula.formula_expression,
                 "business_context": formula.business_context,
                 "formula_explanation": formula.document_evidence,
                 "confidence": formula.confidence,
                 "reasoning_steps": [formula.variants_info],
-                "variables_explained": formula.specific_variables,  # Now formula-specific!
-                "source_method": formula.source_method
+                "variables_explained": formula.specific_variables,
+                "source_method": formula.source_method,
+                "variant_specific": formula.variant_specific,
+                "applicable_variants": formula.applicable_variants,
+                "editable": True
             })
 
-        # Format response in the structure expected by Angular frontend
+        # Determine status
+        if not MOCK_MODE and extraction_result.extracted_formulas:
+            message = f"Successfully extracted {len(extraction_result.extracted_formulas)} formulas from document."
+            status = "success"
+        elif not MOCK_MODE and not extraction_result.extracted_formulas:
+            message = "Document processed but no clear formulas found."
+            status = "warning"
+        else:
+            message = "API key required for document analysis."
+            status = "error"
+
         return jsonify({
             "message": message,
-            "formulas": frontend_formulas,  # This is what Angular expects
+            "formulas": frontend_formulas,
             "status": status,
             "file_type": os.path.splitext(filename)[1].lower(),
-            "extraction_method": "Document-based analysis",
+            "extraction_method": "Enhanced Document Analysis",
             "total_formulas": len(frontend_formulas),
-            # Additional metadata (optional)
-            "surrender_formula_found": extraction_result.surrender_formula_found,
-            "api_key_configured": not MOCK_MODE,
-            "extraction_approach": "Document-based analysis",
-            "no_hardcoded_formulas": True,
-            "extraction_result": extraction_result.to_dict()  # Keep original for debugging
+            "variants_detected": extraction_result.variants_detected,
+            "input_variables": input_variables,
+            "output_variables": output_variables,
+            "api_key_configured": not MOCK_MODE
         }), 200
         
     except Exception as e:
@@ -602,38 +604,38 @@ def upload_file():
             "status": "error",
             "formulas": []
         }), 500
+
+@app.route('/save-formulas', methods=['POST'])
+def save_formulas():
+    """Save edited formulas"""
+    try:
+        data = request.get_json()
+        formulas = data.get('formulas', [])
+        
+        # Here you would typically save to database
+        # For now, just return success
+        
+        return jsonify({
+            "message": f"Successfully saved {len(formulas)} formulas",
+            "status": "success",
+            "saved_count": len(formulas)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "message": f"Failed to save formulas: {str(e)}",
+            "status": "error"
+        }), 500
+
 @app.route('/forward-formulas', methods=['POST'])
 def forward_formulas():
+    """Forward formulas to data processing service"""
     try:
         data = request.get_json()
         response = requests.post("http://127.0.0.1:5001/store-formulas", json=data)
         return jsonify(response.json()), response.status_code
     except Exception as e:
         return jsonify({"message": f"Forwarding failed: {str(e)}"}), 500
-
-
-@app.route('/test-extraction', methods=['POST'])
-def test_extraction():
-    """Test endpoint for document-based extraction"""
-    try:
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({"error": "No text provided"}), 400
-        
-        text = data['text']
-        extraction_result = document_extractor.extract_formulas_from_document(text)
-        
-        return jsonify({
-            "input_text_preview": text[:500] + "..." if len(text) > 500 else text,
-            "extraction_method": "Document Analysis",
-            "extraction_result": extraction_result.to_dict(),
-            "api_key_configured": not MOCK_MODE,
-            "surrender_formula_found": extraction_result.surrender_formula_found,
-            "total_formulas": len(extraction_result.extracted_formulas)
-        })
-    except Exception as e:
-        print(f"❌ Test endpoint failed: {e}")
-        return jsonify({"error": str(e)}), 500
 
 @app.errorhandler(413)
 def too_large(e):
@@ -650,17 +652,13 @@ def internal_error(e):
     }), 500
 
 if __name__ == '__main__':
-    print("📋 Starting Document-Based Formula Extractor")
+    print("📋 Starting Enhanced Document Formula Extractor")
     print(f"🔧 API Key Configured: {'YES' if not MOCK_MODE else 'NO'}")
     print("🌐 Server will run on http://127.0.0.1:5000")
     print("📁 Supported formats:", ', '.join(ALLOWED_EXTENSIONS))
-    print(f"📊 Input variables: {len(INPUT_VARIABLES)}")
-    print(f"🎯 Target formulas: {len(TARGET_OUTPUT_VARIABLES)}")
-    print("✅ Document-based extraction: NO hardcoded formulas")
-    print("🎯 Special focus: Surrender value calculations")
-    print("💡 Set GEMINI_API_KEY environment variable to enable extraction")
+    print(f"📊 Generic insurance terms: {len(GENERIC_INSURANCE_TERMS)}")
+    print("✅ Features: Custom variables, Variant detection, Editable formulas")
     
-    # Run with proper configuration
     app.run(
         host='127.0.0.1',
         port=5000,

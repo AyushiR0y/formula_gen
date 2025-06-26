@@ -1,13 +1,1076 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Frontend</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormulaExtract Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Bar */
+        .header-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .header-bar h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-bar p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Modern 3D Boxes */
+        .content-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.1),
+                0 1px 8px rgba(0,0,0,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .content-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 15px 40px rgba(0,0,0,0.12),
+                0 5px 15px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .box-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            position: relative;
+        }
+
+        .box-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Variable Configuration */
+        .variables-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 300px;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .variable-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            box-shadow: 
+                inset 0 2px 4px rgba(0,0,0,0.06),
+                0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .variable-section:hover {
+            border-color: #a8c8f0;
+            box-shadow: 
+                inset 0 2px 4px rgba(0,0,0,0.06),
+                0 0 0 3px rgba(167, 199, 240, 0.1);
+        }
+
+        .variable-section h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .variable-list {
+            min-height: 150px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 2px dashed #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .variable-list.drag-over {
+            border-color: #a8c8f0;
+            background: #f0f7ff;
+        }
+
+        .variable-item {
+            background: white;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .variable-item:hover {
+            border-color: #a8c8f0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .variable-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .add-variable-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .add-variable-form input {
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .add-variable-form input:focus {
+            outline: none;
+            border-color: #a8c8f0;
+            box-shadow: 0 0 0 3px rgba(167, 199, 240, 0.1);
+        }
+
+        /* Generic Variables Panel */
+        .generic-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .generic-panel h3 {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .generic-toggle {
+            width: 100%;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .generic-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .generic-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .generic-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .generic-list::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+        }
+
+        .generic-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+
+        .generic-item {
+            background: rgba(255,255,255,0.15);
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: grab;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .generic-item:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateX(5px);
+        }
+
+        .generic-item:active {
+            cursor: grabbing;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            text-align: center;
+        }
+
+        .upload-dropzone {
+            border: 3px dashed #a8c8f0;
+            border-radius: 15px;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-dropzone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(167, 199, 240, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-dropzone:hover::before,
+        .upload-dropzone.dragover::before {
+            opacity: 1;
+        }
+
+        .upload-dropzone:hover,
+        .upload-dropzone.dragover {
+            border-color: #667eea;
+            background: #f0f7ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #a8c8f0;
+            margin-bottom: 15px;
+        }
+
+        .upload-text h3 {
+            font-size: 1.3rem;
+            color: #495057;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .upload-text p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .file-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #0c5460;
+            box-shadow: 0 4px 15px rgba(190, 229, 235, 0.3);
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Formulas Section */
+        .formulas-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .formula-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .formula-card:hover {
+            border-color: #a8c8f0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .formula-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .formula-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .formula-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .formula-content {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #495057;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .add-formula-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .add-formula-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .btn-lg {
+            padding: 18px 36px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 12px;
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            box-shadow: 0 8px 30px rgba(40, 167, 69, 0.4);
+            margin-top: 30px;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            display: block;
+        }
+
+        .continue-btn:hover:not(:disabled) {
+            box-shadow: 0 12px 40px rgba(40, 167, 69, 0.5);
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .variables-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .generic-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .variables-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .header-bar {
+                padding: 20px 25px;
+            }
+            
+            .header-bar h1 {
+                font-size: 2rem;
+            }
+            
+            .content-box {
+                padding: 20px;
+            }
+            
+            .upload-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Hidden elements */
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <app-root></app-root>
+    <div class="container">
+        <!-- Header Bar -->
+        <header class="header-bar">
+            <h1>FormulaExtract Pro</h1>
+            <p>AI-Powered Mathematical Formula Extraction from Documents</p>
+        </header>
+
+        <!-- Variable Configuration -->
+        <section class="content-box">
+            <h2 class="box-title">Variable Configuration</h2>
+            <div class="variables-container">
+                <!-- Input Variables -->
+                <div class="variable-section">
+                    <h3>Input Variables</h3>
+                    <div class="variable-list" id="input-variables" ondrop="drop(event, 'input')" ondragover="allowDrop(event)">
+                        <div class="variable-item" draggable="true" ondragstart="drag(event)">
+                            <span>NO_OF_PREMIUMS_PAID</span>
+                            <button class="btn btn-danger btn-sm" onclick="removeVariable(this)">×</button>
+                        </div>
+                    </div>
+                    <div class="add-variable-form">
+                        <input type="text" id="input-var-name" placeholder="Variable name (e.g., AMOUNT)">
+                        <input type="text" id="input-var-desc" placeholder="Description (optional)">
+                        <button type="button" class="btn" onclick="addInputVariable()">Add Input Variable</button>
+                    </div>
+                </div>
+
+                <!-- Output Variables -->
+                <div class="variable-section">
+                    <h3>Output Variables</h3>
+                    <div class="variable-list" id="output-variables" ondrop="drop(event, 'output')" ondragover="allowDrop(event)">
+                        <div class="variable-item" draggable="true" ondragstart="drag(event)">
+                            <span>POLICY_YEAR</span>
+                            <button class="btn btn-danger btn-sm" onclick="removeVariable(this)">×</button>
+                        </div>
+                    </div>
+                    <div class="add-variable-form">
+                        <input type="text" id="output-var-name" placeholder="Output variable name">
+                        <button type="button" class="btn" onclick="addOutputVariable()">Add Output Variable</button>
+                    </div>
+                </div>
+
+                <!-- Generic Variables Panel -->
+                <div class="generic-panel">
+                    <h3>Generic Variables</h3>
+                    <button type="button" class="generic-toggle" onclick="toggleGenericVariables()">
+                        <span id="toggle-text">Show Available Variables</span>
+                    </button>
+                    <div class="generic-list hidden" id="generic-list">
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">PREMIUM_TERM</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">BENEFIT_TERM</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">ANNUALISED_PREMIUM</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">BOOKING_FREQUENCY</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">TERM_START_DATE</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">FUP_Date</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SUM_ASSURED</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">FULL_TERM_PREMIUM</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SURRENDER_PAID_AMOUNT</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">GSV</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">MATURITY_DATE</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SSV1_AMT</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SSV2_AMT</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SSV3_AMT</div>
+                        <div class="generic-item" draggable="true" ondragstart="drag(event)">SSV</div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Document Upload -->
+        <section class="content-box">
+            <h2 class="box-title">Document Upload</h2>
+            <div class="upload-section">
+                <div class="upload-dropzone" onclick="document.getElementById('file-input').click()" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <input type="file" id="file-input" style="display: none;" onchange="handleFileSelect(event)" accept=".pdf,.doc,.docx,.txt">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">
+                        <h3>Drag & drop or click to select a file</h3>
+                        <p>Supported formats: PDF, DOC, DOCX, TXT (Max 10MB)</p>
+                    </div>
+                </div>
+                <div id="file-info" class="file-info hidden"></div>
+                <div class="upload-actions">
+                    <button type="button" class="btn btn-lg" id="generate-btn" onclick="generateFormulas()" disabled>
+                        Generate Formulas
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="resetAll()">
+                        Reset All
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Extracted Formulas -->
+        <section class="content-box">
+            <h2 class="box-title">Extracted Formulas</h2>
+            <div id="formulas-container">
+                <div class="status-message status-info">
+                    Complete the document upload and processing to see extracted formulas here.
+                </div>
+            </div>
+            <button type="button" class="add-formula-btn hidden" onclick="addNewFormula()">
+                + Add New Formula
+            </button>
+        </section>
+
+        <!-- Continue Button -->
+        <button type="button" class="btn btn-lg continue-btn hidden" id="continue-btn" onclick="continueToProcessing()">
+            Continue to Data Processing →
+        </button>
+    </div>
+
+    <script>
+        // Global variables
+        let uploadedFile = null;
+        let extractedFormulas = [];
+
+        // Drag and Drop functionality
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.target.closest('.variable-list').classList.add('drag-over');
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.textContent.replace('×', '').trim());
+            ev.target.classList.add('dragging');
+        }
+
+        function drop(ev, type) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const targetList = ev.target.closest('.variable-list');
+            targetList.classList.remove('drag-over');
+            
+            if (data && !isDuplicateVariable(data, type)) {
+                addVariableToList(data, type);
+            }
+            
+            // Remove dragging class from all items
+            document.querySelectorAll('.dragging').forEach(item => {
+                item.classList.remove('dragging');
+            });
+        }
+
+        function isDuplicateVariable(name, type) {
+            const listId = type === 'input' ? 'input-variables' : 'output-variables';
+            const existingVars = document.querySelectorAll(`#${listId} .variable-item span`);
+            return Array.from(existingVars).some(span => span.textContent === name);
+        }
+
+        function addVariableToList(name, type) {
+            const listId = type === 'input' ? 'input-variables' : 'output-variables';
+            const list = document.getElementById(listId);
+            
+            const variableItem = document.createElement('div');
+            variableItem.className = 'variable-item';
+            variableItem.draggable = true;
+            variableItem.ondragstart = drag;
+            variableItem.innerHTML = `
+                <span>${name}</span>
+                <button class="btn btn-danger btn-sm" onclick="removeVariable(this)">×</button>
+            `;
+            
+            list.appendChild(variableItem);
+        }
+
+        function addInputVariable() {
+            const nameInput = document.getElementById('input-var-name');
+            const name = nameInput.value.trim().toUpperCase();
+            
+            if (name && !isDuplicateVariable(name, 'input')) {
+                addVariableToList(name, 'input');
+                nameInput.value = '';
+                document.getElementById('input-var-desc').value = '';
+            }
+        }
+
+        function addOutputVariable() {
+            const nameInput = document.getElementById('output-var-name');
+            const name = nameInput.value.trim().toUpperCase();
+            
+            if (name && !isDuplicateVariable(name, 'output')) {
+                addVariableToList(name, 'output');
+                nameInput.value = '';
+            }
+        }
+
+        function removeVariable(button) {
+            button.parentElement.remove();
+        }
+
+        function toggleGenericVariables() {
+            const list = document.getElementById('generic-list');
+            const toggleText = document.getElementById('toggle-text');
+            
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                toggleText.textContent = 'Hide Available Variables';
+            } else {
+                list.classList.add('hidden');
+                toggleText.textContent = 'Show Available Variables';
+            }
+        }
+
+        // File handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function handleFileDrop(event) {
+            event.preventDefault();
+            event.target.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.target.closest('.upload-dropzone').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.target.closest('.upload-dropzone').classList.remove('dragover');
+        }
+
+        function processFile(file) {
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                showStatus('File size exceeds 10MB limit', 'error');
+                return;
+            }
+
+            uploadedFile = file;
+            const fileInfo = document.getElementById('file-info');
+            fileInfo.innerHTML = `
+                <h4>📁 ${file.name}</h4>
+                <p><strong>Size:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p><strong>Type:</strong> ${file.type || 'Unknown'}</p>
+                <p><strong>Last Modified:</strong> ${new Date(file.lastModified).toLocaleString()}</p>
+            `;
+            fileInfo.classList.remove('hidden');
+            
+            document.getElementById('generate-btn').disabled = false;
+        }
+
+        function generateFormulas() {
+            if (!uploadedFile) {
+                showStatus('Please upload a file first', 'error');
+                return;
+            }
+
+            const inputVars = getVariables('input');
+            const outputVars = getVariables('output');
+
+            if (inputVars.length === 0 || outputVars.length === 0) {
+                showStatus('Please add at least one input and one output variable', 'error');
+                return;
+            }
+
+            showLoading();
+            
+            // Simulate API call for formula extraction
+            setTimeout(() => {
+                const mockFormulas = [
+                    {
+                        id: 1,
+                        name: '10 Times of AP',
+                        formula: '10_TIMES_OF_AP=10*FULL_TERM_PREMIUM*BOOKING_FREQUENCY',
+                        description: 'Calculate 10 times of Annualised Premium based on Full term premium and booking frequency'
+                    },
+                    {
+                        id: 2,
+                        name: 'Maturity Date',
+                        formula: 'MATURITY_DATE=DATE_ADD(TERM_START_DATE, (BENEFIT_TERM*12))',
+                        description: 'Calculate Maturity Date based on Term Start Date and Benefit Term'
+                    }
+                ];
+                
+                extractedFormulas = mockFormulas;
+                displayFormulas();
+                hideLoading();
+                showStatus('Formulas extracted successfully!', 'success');
+                
+                document.querySelector('.add-formula-btn').classList.remove('hidden');
+                document.getElementById('continue-btn').classList.remove('hidden');
+            }, 2000);
+        }
+
+        function getVariables(type) {
+            const listId = type === 'input' ? 'input-variables' : 'output-variables';
+            const variables = document.querySelectorAll(`#${listId} .variable-item span`);
+            return Array.from(variables).map(span => span.textContent);
+        }
+
+        function displayFormulas() {
+            const container = document.getElementById('formulas-container');
+            container.innerHTML = '';
+
+            extractedFormulas.forEach(formula => {
+                const formulaCard = document.createElement('div');
+                formulaCard.className = 'formula-card';
+                formulaCard.innerHTML = `
+                    <div class="formula-header">
+                        <h3 class="formula-title">${formula.name}</h3>
+                        <div class="formula-actions">
+                            <button class="btn btn-sm" onclick="editFormula(${formula.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteFormula(${formula.id})">Delete</button>
+                        </div>
+                    </div>
+                    <textarea class="formula-content" id="formula-${formula.id}" onchange="updateFormula(${formula.id})">${formula.formula}</textarea>
+                    <p style="margin-top: 10px; color: #6c757d; font-size: 0.9rem;">${formula.description}</p>
+                `;
+                container.appendChild(formulaCard);
+            });
+        }
+
+        function addNewFormula() {
+        const newId = Math.max(...extractedFormulas.map(f => f.id || 0), 0) + 1;
+        const newFormula = {
+            id: newId,
+            name: `Formula ${newId}`,
+            formula: '', // User-defined expression like max(a, b) or sa * (n / t)
+            description: 'Enter the formula expression (e.g., max(a, b), premium * factor)'
+        };
+            
+            extractedFormulas.push(newFormula);
+            displayFormulas();
+        }
+
+        function editFormula(id) {
+            const formula = extractedFormulas.find(f => f.id === id);
+            if (formula) {
+                const newName = prompt('Enter formula name:', formula.name);
+                if (newName) {
+                    formula.name = newName;
+                    displayFormulas();
+                }
+            }
+        }
+
+        function updateFormula(id) {
+            const formula = extractedFormulas.find(f => f.id === id);
+            const textarea = document.getElementById(`formula-${id}`);
+            if (formula && textarea) {
+                formula.formula = textarea.value;
+            }
+        }
+
+        function deleteFormula(id) {
+            if (confirm('Are you sure you want to delete this formula?')) {
+                extractedFormulas = extractedFormulas.filter(f => f.id !== id);
+                displayFormulas();
+            }
+        }
+
+        function showLoading() {
+            const container = document.getElementById('formulas-container');
+            container.innerHTML = '<div class="loading">Processing document and extracting formulas...</div>';
+        }
+
+        function hideLoading() {
+            // Loading will be replaced by displayFormulas()
+        }
+
+        function showStatus(message, type) {
+            // Remove existing status messages
+            const existingStatus = document.querySelector('.status-message');
+            if (existingStatus) {
+                existingStatus.remove();
+            }
+
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            // Insert at the top of the formulas container
+            const container = document.getElementById('formulas-container');
+            container.insertBefore(statusDiv, container.firstChild);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function resetAll() {
+            if (confirm('Are you sure you want to reset all data? This will clear all variables, uploaded files, and extracted formulas.')) {
+                // Clear variables
+                document.getElementById('input-variables').innerHTML = '';
+                document.getElementById('output-variables').innerHTML = '';
+                
+                // Clear file
+                document.getElementById('file-input').value = '';
+                document.getElementById('file-info').classList.add('hidden');
+                uploadedFile = null;
+                
+                // Clear formulas
+                extractedFormulas = [];
+                document.getElementById('formulas-container').innerHTML = `
+                    <div class="status-message status-info">
+                        Complete the document upload and processing to see extracted formulas here.
+                    </div>
+                `;
+                
+                // Hide buttons
+                document.querySelector('.add-formula-btn').classList.add('hidden');
+                document.getElementById('continue-btn').classList.add('hidden');
+                document.getElementById('generate-btn').disabled = true;
+                
+                // Clear input fields
+                document.getElementById('input-var-name').value = '';
+                document.getElementById('input-var-desc').value = '';
+                document.getElementById('output-var-name').value = '';
+                
+                showStatus('All data has been reset', 'info');
+            }
+        }
+
+        function continueToProcessing() {
+            if (extractedFormulas.length === 0) {
+                showStatus('Please generate formulas before continuing', 'error');
+                return;
+            }
+            
+            // Prepare data for processing
+            const processingData = {
+                inputVariables: getVariables('input'),
+                outputVariables: getVariables('output'),
+                formulas: extractedFormulas,
+                uploadedFile: uploadedFile ? uploadedFile.name : null
+            };
+            
+            // Store data in sessionStorage for next page
+            sessionStorage.setItem('formulaData', JSON.stringify(processingData));
+            
+            // Show confirmation
+            showStatus('Redirecting to data processing...', 'success');
+            
+            // Simulate redirect to formula_processor.py
+            setTimeout(() => {
+                alert('Ready to redirect to formula_processor.py\n\nData prepared:\n' + 
+                      '- Input Variables: ' + processingData.inputVariables.join(', ') + '\n' +
+                      '- Output Variables: ' + processingData.outputVariables.join(', ') + '\n' +
+                      '- Formulas: ' + processingData.formulas.length + ' formula(s)\n' +
+                      '- File: ' + (processingData.uploadedFile || 'None'));
+            }, 1000);
+        }
+
+        // Event listeners for drag and drop on lists
+        document.addEventListener('DOMContentLoaded', function() {
+            const variableLists = document.querySelectorAll('.variable-list');
+            variableLists.forEach(list => {
+                list.addEventListener('dragleave', function(e) {
+                    if (!list.contains(e.relatedTarget)) {
+                        list.classList.remove('drag-over');
+                    }
+                });
+            });
+
+            // Add sample variables for demonstration
+            addVariableToList('PREMIUM', 'input');
+        });
+
+        // Enter key handlers for input fields
+        document.getElementById('input-var-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addInputVariable();
+            }
+        });
+
+        document.getElementById('output-var-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addOutputVariable();
+            }
+        });
+    </script>
 </body>
 </html>
